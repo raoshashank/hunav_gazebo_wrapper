@@ -33,8 +33,12 @@ def generate_launch_description():
     use_navgoal = LaunchConfiguration('use_navgoal_to_start')
     ignore_models = LaunchConfiguration('ignore_models')
     
-    x_pose = LaunchConfiguration('x_pose', default='1.0')
-    y_pose = LaunchConfiguration('y_pose', default='1.0')
+    x_pose = LaunchConfiguration('x_pose', default='0')
+    y_pose = LaunchConfiguration('y_pose', default='0')
+    roll = LaunchConfiguration('roll', default='0')
+    pitch = LaunchConfiguration('pitch', default='0')
+    yaw = LaunchConfiguration('yaw', default='0')
+
 
     launch_file_dir = os.path.join(get_package_share_directory('turtlebot3_gazebo'), 'launch')
     pkg_gazebo_ros = get_package_share_directory('gazebo_ros')
@@ -82,7 +86,10 @@ def generate_launch_description():
         ),
         launch_arguments={
             'x_pose': x_pose,
-            'y_pose': y_pose
+            'y_pose': y_pose,
+            'roll': roll,
+            'pitch': pitch,
+            'yaw': yaw
         }.items()
     )
 

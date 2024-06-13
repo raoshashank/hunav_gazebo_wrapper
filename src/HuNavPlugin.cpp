@@ -10,7 +10,7 @@
 /** Authors:                                                           */
 /** Noé Pérez-Higueras (maintainer)                                    */
 /** email: noeperez@upo.es                                             */
-/**                                                                    */
+/**                                                                   */
 /** This software may be modified and distributed under the terms      */
 /** of the MIT license. See the LICENSE file for details.              */
 /**                                                                    */
@@ -386,7 +386,7 @@ namespace hunav
       robotAgent.behavior = hunav_msgs::msg::Agent::BEH_REGULAR;
       robotAgent.behavior_state = hunav_msgs::msg::Agent::BEH_NO_ACTIVE;
       
-      robotAgent.gesture = 0;
+      robotAgent.gesture = 0; 
       
       robotAgent.name = robotName;
       robotAgent.group_id = -1;
