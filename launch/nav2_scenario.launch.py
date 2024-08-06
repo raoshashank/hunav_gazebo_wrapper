@@ -347,7 +347,7 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(
             os.path.join(nav2_launch_dir, 'rviz_launch.py')),
         launch_arguments={'namespace': LaunchConfiguration('namespace'),
-                          'use_namespace': LaunchConfiguration('use_namespace'),
+                          'use_namespace': LaunchConfiguration('use_namespace'),    
                           'rviz_config': rviz_config_file}.items())
     ld.add_action(rviz_cmd)
     
@@ -365,10 +365,14 @@ def generate_launch_description():
                           'use_respawn':LaunchConfiguration('use_respawn')}.items())
     ld.add_action(bringup_cmd)
     
-    # demo_cmd = Node(
-    #     package='nav2_simple_commander',
-    #     executable='example_waypoint_follower',
-    #     emulate_tty=True,
-    #     output='screen')
-    # ld.add_action(demo_cmd)
+    waypoint_file = os.path.join(hunav_gazebo_wrapper_pkg_dir, 'config', 'waypoints.yaml'),
+    waypoint_follower_node = Node(
+        package='hunav_gazebo_wrapper',
+        executable='waypointfollow.py',
+        arguments=[
+            '-waypoint_file', waypoint_file
+        ],
+        output='screen'
+    )
+    ld.add_action(waypoint_follower_node)
     return ld

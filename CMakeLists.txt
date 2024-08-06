@@ -10,10 +10,12 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 find_package(ament_cmake REQUIRED)
+find_package(ament_cmake_python REQUIRED)
 find_package(tinyxml2_vendor REQUIRED)
 find_package(TinyXML2 REQUIRED)
 find_package(ament_index_cpp REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rclpy REQUIRED)
 find_package(gazebo_ros REQUIRED)
 #find_package(Boost REQUIRED COMPONENTS thread)
 find_package(gazebo REQUIRED)
@@ -58,6 +60,12 @@ target_link_libraries(hunav_gazebo_world_generator ${TINYXML2_LIBRARY})
 install(TARGETS hunav_gazebo_world_generator
   DESTINATION lib/${PROJECT_NAME}
 )
+
+ament_python_install_package(${PROJECT_NAME})
+install(PROGRAMS
+	scripts/waypointfollow.py
+	DESTINATION lib/${PROJECT_NAME}
+	)
 
 install(TARGETS HuNavPlugin 
   ARCHIVE DESTINATION lib
