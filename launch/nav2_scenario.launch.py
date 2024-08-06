@@ -219,6 +219,7 @@ def generate_launch_description():
     
     #spawn robot
     nav2_bringup_dir = get_package_share_directory('nav2_bringup')
+    tb3_gazebo_dir = get_package_share_directory('turtlebot3_gazebo')
     robot_name = 'burger'
     
     declare_namespace_cmd = DeclareLaunchArgument(
@@ -240,7 +241,7 @@ def generate_launch_description():
     ld.add_action(declare_use_sim_time_cmd)
     
     with open(os.path.join(
-        get_package_share_directory('turtlebot3_gazebo'),
+        tb3_gazebo_dir,
         'urdf',
         'turtlebot3_burger.urdf'), 'r') as infp:
         robot_description  = infp.read()
@@ -258,7 +259,7 @@ def generate_launch_description():
                      'robot_description': robot_description}],
         remappings=remappings)
     
-    with open(os.path.join(get_package_share_directory('hunav_gazebo_wrapper'),'config','robot.yaml'),'r') as f:
+    with open(os.path.join(hunav_gazebo_wrapper_pkg_dir,'config','robot.yaml'),'r') as f:
         robot_params = yaml.safe_load(f)
     
     with open(os.path.join(hunav_gazebo_wrapper_pkg_dir, 'config', 'nav2_params.yaml'),'r') as f:
@@ -279,7 +280,7 @@ def generate_launch_description():
         package='gazebo_ros',
         executable='spawn_entity.py',
         arguments=['-entity', robot_name,
-            '-file', "/home/shashank/catkin_ws/src/turtlebot3_simulations/turtlebot3_gazebo/models/turtlebot3_burger/model.sdf",
+            '-file',os.path.join(tb3_gazebo_dir,'models','turtlebot3_burger','model.sdf'),
             '-x', str(robot_params['x_pose']),
             '-y', str(robot_params['y_pose']),
             '-R', str(robot_params['roll']),
