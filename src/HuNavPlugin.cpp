@@ -45,6 +45,8 @@ namespace hunav
 
     void goalCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg);
     void robotGestCallback(const std_msgs::msg::UInt32::SharedPtr msg);
+    void continueNavCallback(const hunav_msgs::msg::PauseNavs::SharedPtr msg);
+
     /// \brief Helper function to collect the pedestrians data from Gazebo
     bool GetPedestrians();
     /// \brief Helper function to collect the robot data from Gazebo
@@ -87,11 +89,14 @@ namespace hunav
 
     /// \brief ros service to reset the agents in the hunav_manager
     rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr goal_sub;
+    
     rclcpp::Subscription<std_msgs::msg::UInt32>::SharedPtr robotgest_sub;
+    rclcpp::Subscription<hunav_msgs::msg::PauseNavs>::SharedPtr continue_nav_sub;
 
     /// \brief the robot as a agent msg
     hunav_msgs::msg::Agent robotAgent;
     hunav_msgs::msg::Agent init_robotAgent;
+    std::map<uint32_t,bool> pauseNav;
 
     /// \brief vector of pedestrians detected.
     std::vector<hunav_msgs::msg::Agent> pedestrians;
@@ -123,9 +128,11 @@ namespace hunav
 
     bool waitForGoal;
     bool goalReceived;
+    bool continueNavigation;
     std::string goalTopic;
     std::string robotGestTopic;
-
+    std::string continueNavTopic;
+    std::map<uint32_t,bool> pause_nav_map;
     /// \brief List of models to ignore. Used for vector field
     std::vector<std::string> ignoreModels;
   };
@@ -197,7 +204,7 @@ namespace hunav
     hnav_->rostime = hnav_->rosnode->get_clock()->now();
     hnav_->dt = 0;
     // Update rate
-    auto update_rate = _sdf->Get<double>("update_rate", 100.0).first;
+  auto update_rate = _sdf->Get<double>("update_rate", 100.0).first;
     if (update_rate > 0.0)
     {
       hnav_->update_rate_secs = 1.0 / update_rate;
@@ -229,6 +236,14 @@ namespace hunav
                         std::placeholders::_1));
     }
     
+    hnav_->continueNavTopic = "pause_nav";
+    hnav_->continue_nav_sub = 
+          hnav_->rosnode->create_subscription<hunav_msgs::msg::PauseNavs>(
+              hnav_->continueNavTopic, 1,
+              std::bind(&HuNavPluginPrivate::continueNavCallback, hnav_.get(),
+                        std::placeholders::_1));
+
+
     if (_sdf->HasElement("robotgesture_topic"))
         hnav_->robotGestTopic = _sdf->Get<std::string>("robotgesture_topic");
     else
@@ -528,11 +543,30 @@ namespace hunav
   void HuNavPluginPrivate::robotGestCallback(
       const std_msgs::msg::UInt32::SharedPtr msg)
   {
-    RCLCPP_INFO(rosnode->get_logger(), "\n\nPlugin! Received Robot Gesture!!!!\n\n");
+    //RCLCPP_INFO(rosnode->get_logger(), "\n\nPlugin! Received Robot Gesture!!!!\n\n");
     robotAgent.gesture = msg->data;
   }
 
-
+void HuNavPluginPrivate::continueNavCallback(
+      const hunav_msgs::msg::PauseNavs::SharedPtr msg)
+  {
+    //RCLCPP_INFO(rosnode->get_logger(), "\n\n Plugin: PauseNav RECEIVED!!!!\n\n");
+    // std::vector<uint32_t> paused_ids;
+    for (size_t i = 0; i < msg->agents.size(); ++i)
+    {
+      //update all the paused agents
+      if(msg->agents[i].pause_nav){
+        // paused_ids.push_back(msg->agents[i].id);
+        pause_nav_map[msg->agents[i].id] = true;
+        //RCLCPP_INFO(rosnode->get_logger(), "\n\n Plugin: Pausing navigation for id:%i",msg->agents[i].id);
+      }
+      else{
+        pause_nav_map[msg->agents[i].id] = false;
+        //RCLCPP_INFO(rosnode->get_logger(), "\n\n Plugin: NOT Pausing navigation for id:%i",msg->agents[i].id);
+      }
+    }
+      
+    } 
   /////////////////////////////////////////////////
   void HuNavPluginPrivate::HandleObstacles()
   {
@@ -557,7 +591,7 @@ namespace hunav
             break;
         }
 
-        // Avoid the agent itself and the indicated models
+        // Avoid the agent itself and the inated models
         if (agent->GetId() != modelObstacle->GetId() &&
             std::find(this->ignoreModels.begin(), this->ignoreModels.end(),
                       modelObstacle->GetName()) == this->ignoreModels.end())
@@ -1054,6 +1088,15 @@ namespace hunav
         gazebo_ros::Convert<builtin_interfaces::msg::Time>(_info.simTime);
     // agents.header.stamp = now;
     agents.agents = pedestrians;
+    for (size_t i = 0; i < agents.agents.size(); ++i){
+        // if (std::find(paused_ids.begin(),paused_ids.end(),pedestrians[i].id)!=paused_ids.end()){
+          if(pause_nav_map[agents.agents[i].id]){
+          agents.agents[i].pause_nav = true;
+        }
+        else{
+          agents.agents[i].pause_nav = false;
+        }
+      }
     request->robot = robotAgent;
     request->current_agents = agents; //Send request to the service with current pedestrians
 

@@ -17,30 +17,36 @@ import sys
 from copy import deepcopy
 from geometry_msgs.msg import PoseStamped
 import rclpy
-
+from scipy.spatial.transform import Rotation
 from nav2_simple_commander.robot_navigator import BasicNavigator,TaskResult
 import rclpy.utilities
 import yaml
+class WayPointNavigator(rclpy.Node):
+    def __init__(self):
+        super().__init__('waypoint_follower')
+    
 def main(args=sys.argv[1:]):
     rclpy.init(args=args)
     waypoint_file = rclpy.utilities.remove_ros_args(args)[1]
+    #waypoint_publisher = rclpy.create_publisher(LaserScan,"filtered_scan",qos)
     print(waypoint_file)
     with open(waypoint_file,'r') as f:
-        waypoints = yaml.safe_load(f)
-    
+        robot_poses = yaml.safe_load(f)
     navigator = BasicNavigator()
-
     # Inspection route, probably read in from a file for a real application
     # from either a map or drive and repeat.
     # Set our demo's initial pose
-    # initial_pose = PoseStamped()
-    # initial_pose.header.frame_id = 'map'
-    # initial_pose.header.stamp = navigator.get_clock().now().to_msg()
-    # initial_pose.pose.position.x = 3.45
-    # initial_pose.pose.position.y = 2.15
-    # initial_pose.pose.orientation.z = 1.0
-    # initial_pose.pose.orientation.w = 0.0
-    # navigator.setInitialPose(initial_pose)
+    initial_pose = PoseStamped()
+    initial_pose.header.frame_id = 'map'
+    initial_pose.header.stamp = navigator.get_clock().now().to_msg()
+    initial_pose.pose.position.x = robot_poses['initial_pose']['x']
+    initial_pose.pose.position.y = robot_poses['initial_pose']['y']
+    initial_quat = Rotation.from_euler('xyz',[0,0,robot_poses['initial_pose']['yaw']],degrees=False).as_quat()
+    initial_pose.pose.orientation.x = initial_quat[0]
+    initial_pose.pose.orientation.y = initial_quat[1]
+    initial_pose.pose.orientation.z = initial_quat[2]
+    initial_pose.pose.orientation.w = initial_quat[3]
+    navigator.setInitialPose(initial_pose)
 
     # Wait for navigation to fully activate
     navigator.waitUntilNav2Active()
@@ -54,7 +60,7 @@ def main(args=sys.argv[1:]):
         waypoint_pose.header.stamp = navigator.get_clock().now().to_msg()
         waypoint_pose.pose.orientation.z = 1.0
         waypoint_pose.pose.orientation.w = 0.0
-        for pt in waypoints:
+        for pt in robot_poses['waypoints']:
             waypoint_pose.pose.position.x = pt['position']['x']
             waypoint_pose.pose.position.y = pt['position']['y']
             points.append(deepcopy(waypoint_pose))

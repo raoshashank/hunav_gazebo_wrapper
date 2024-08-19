@@ -42,6 +42,8 @@
 // ROS
 #include "hunav_msgs/msg/agent.hpp"
 #include "hunav_msgs/msg/agents.hpp"
+#include "hunav_msgs/msg/pause_nav.hpp"
+#include "hunav_msgs/msg/pause_navs.hpp"
 #include "hunav_msgs/srv/compute_agents.hpp"
 #include "hunav_msgs/srv/get_agents.hpp"
 #include "hunav_msgs/srv/reset_agents.hpp"
