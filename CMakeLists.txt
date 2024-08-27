@@ -64,8 +64,10 @@ install(TARGETS hunav_gazebo_world_generator
 ament_python_install_package(${PROJECT_NAME})
 install(PROGRAMS
 	scripts/waypointfollow.py
+  scripts/goToPose.py
   scripts/scenario_manager.py
   scripts/teleop_twist_keyboard.py
+  scripts/gesture_listener.py
 	DESTINATION lib/${PROJECT_NAME}
 	)
 

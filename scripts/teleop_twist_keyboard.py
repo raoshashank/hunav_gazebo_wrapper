@@ -210,6 +210,12 @@ def main():
             twist.angular.x = 0.0
             twist.angular.y = 0.0
             twist.angular.z = th * turn
+            
+            print(x)
+            print(y)
+            print(z)
+            print(th)
+            
             pub.publish(twist_msg)
 
     except Exception as e:
