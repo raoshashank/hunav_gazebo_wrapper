@@ -1,4 +1,5 @@
 # hunav_gazebo_wrapper
+This is a modified version of the hunavsim gazebo wrapper, for use with the Scenario generation framework [SocRATES](https://github.com/raoshashank/SoCRATES#this-package-contains-code-for-the-paper-towards-automated-scenario-testing-of-social-navigation-algorithms)
 
 **This is a work in progress version**
 
