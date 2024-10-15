@@ -22,7 +22,7 @@ class SimpleGestureListener(Node):
         for agent in msg.agents:
             if agent.gesture!=0:
                 gstr = f'Agent {agent.name} says {self.human_dict[agent.gesture]}({agent.gesture})'
-                self.get_logger().info(gstr)
+                self.get_logger().info(gstr,throttle_duration_sec = 2.0)
 
 if __name__ == '__main__':
     rclpy.init()

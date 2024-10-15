@@ -24,7 +24,7 @@
 // #include <ignition/math.hh>
 // #include <ignition/math/gzmath.hh>
 #include <hunav_gazebo_wrapper/HuNavPlugin.h>
-
+#include <nav_msgs/msg/path.hpp>
 #define DEF_WALKING_ANIMATION "walking"
 
 // namespace gazebo_ros {
@@ -43,7 +43,7 @@ namespace hunav
     /// \param[in] _info Updated simulation info.
     void OnUpdate(const gazebo::common::UpdateInfo &_info);
 
-    void goalCallback(const geometry_msgs::msg::PoseStamped::SharedPtr msg);
+    void goalCallback(const nav_msgs::msg::Path::SharedPtr msg);
     void robotGestCallback(const std_msgs::msg::UInt32::SharedPtr msg);
     void continueNavCallback(const hunav_msgs::msg::PauseNavs::SharedPtr msg);
 
@@ -88,7 +88,7 @@ namespace hunav
     rclcpp::Client<hunav_msgs::srv::ResetAgents>::SharedPtr rosSrvResetClient;
 
     /// \brief ros service to reset the agents in the hunav_manager
-    rclcpp::Subscription<geometry_msgs::msg::PoseStamped>::SharedPtr goal_sub;
+    rclcpp::Subscription<nav_msgs::msg::Path>::SharedPtr goal_sub;
     
     rclcpp::Subscription<std_msgs::msg::UInt32>::SharedPtr robotgest_sub;
     rclcpp::Subscription<hunav_msgs::msg::PauseNavs>::SharedPtr continue_nav_sub;
@@ -230,7 +230,7 @@ namespace hunav
     if (hnav_->waitForGoal)
     {
       hnav_->goal_sub =
-          hnav_->rosnode->create_subscription<geometry_msgs::msg::PoseStamped>(
+          hnav_->rosnode->create_subscription<nav_msgs::msg::Path>(
               hnav_->goalTopic, 1,
               std::bind(&HuNavPluginPrivate::goalCallback, hnav_.get(),
                         std::placeholders::_1));
@@ -244,10 +244,10 @@ namespace hunav
                         std::placeholders::_1));
 
 
-    if (_sdf->HasElement("robotgesture_topic"))
-        hnav_->robotGestTopic = _sdf->Get<std::string>("robotgesture_topic");
-    else
-        hnav_->robotGestTopic = "robot_gesture";
+    // if (_sdf->HasElement("robotgesture_topic"))
+    //     hnav_->robotGestTopic = _sdf->Get<std::string>("robotgesture_topic");
+    // else
+    hnav_->robotGestTopic = "robot_gesture";
         
     hnav_->robotgest_sub = hnav_->rosnode->create_subscription<std_msgs::msg::UInt32>(
                           hnav_->robotGestTopic, 1,
@@ -534,16 +534,18 @@ namespace hunav
   }
 
   void HuNavPluginPrivate::goalCallback(
-      const geometry_msgs::msg::PoseStamped::SharedPtr msg)
+      const nav_msgs::msg::Path::SharedPtr msg)
   {
-    RCLCPP_INFO(rosnode->get_logger(), "\n\nPlugin! GOAL RECEIVED!!!!\n\n");
+    if(goalReceived!=true){
+    RCLCPP_INFO(rosnode->get_logger(), "\n\nPlugin! GOAL RECEIVED!!!! \n\n");
     goalReceived = true;
+    }
   }
 
   void HuNavPluginPrivate::robotGestCallback(
       const std_msgs::msg::UInt32::SharedPtr msg)
   {
-    //RCLCPP_INFO(rosnode->get_logger(), "\n\nPlugin! Received Robot Gesture!!!!\n\n");
+    // RCLCPP_INFO(rosnode->get_logger(), "\n\nPlugin! Received Robot Gesture!!!!\n\n");
     robotAgent.gesture = msg->data;
   }
 
@@ -583,7 +585,6 @@ void HuNavPluginPrivate::continueNavCallback(
       for (size_t j = 0; j < world->ModelCount(); ++j)
       {
         gazebo::physics::ModelPtr modelObstacle = world->ModelByIndex(j);
-
         // Avoid to compute the other actors as obstacles
         for (size_t k = 0; k < pedestrians.size(); ++k)
         {
@@ -610,9 +611,10 @@ void HuNavPluginPrivate::continueNavCallback(
 
             ignition::math::Vector3d intersecPos;
             double dist = -1;
-
+            
             if (std::get<0>(obs_intersect) == true)
             {
+              //RCLCPP_INFO(rosnode->get_logger(), "%s : %s",pedestrians[i].name.c_str(), modelObstacle->GetName().c_str());
               intersecPos = std::get<2>(obs_intersect);
               dist = std::get<1>(obs_intersect);
             }
@@ -800,7 +802,9 @@ void HuNavPluginPrivate::continueNavCallback(
 
     if (goalReceived == false)
     {
-      RCLCPP_INFO(rosnode->get_logger(),
+      auto& clk = *rosnode->get_clock();
+      RCLCPP_INFO_THROTTLE(rosnode->get_logger(),
+                  clk, 5000,
                   "HuNavPlugin. Waiting to receive the robot navigation goal...");
       return;
     }

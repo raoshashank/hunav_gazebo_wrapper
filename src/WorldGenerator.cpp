@@ -23,14 +23,15 @@
 
 using namespace tinyxml2;
 
-namespace hunav {
+namespace hunav
+{
 
 using namespace std::chrono_literals;
 using std::placeholders::_1;
 using std::placeholders::_2;
 
-WorldGenerator::WorldGenerator() : Node("hunav_gazebo_world_generator") {
-
+WorldGenerator::WorldGenerator() : Node("hunav_gazebo_world_generator")
+{
   // fill with the names of agent parameters
   params_ = {".id",          ".skin",        ".behavior",    ".group_id",
              ".max_vel",     ".radius",      ".init_pose.x", ".init_pose.y",
@@ -380,7 +381,7 @@ bool WorldGenerator::processXML() {
       pFilename1->SetText(animation_filename[1].c_str());
     }
     else{
-        pFilename1->SetText(animation_filename[0].c_str());
+        pFilename1->SetText(animation_filename[1].c_str());
     }
 
     tinyxml2::XMLElement *pScale1 = doc.NewElement("scale");
@@ -408,7 +409,7 @@ bool WorldGenerator::processXML() {
       pFilename2->SetText(animation_filename[4].c_str());
     }
     else{
-      pFilename2->SetText(animation_filename[0].c_str());
+      pFilename2->SetText(animation_filename[1].c_str());
     }
 
     tinyxml2::XMLElement *pScale2 = doc.NewElement("scale");

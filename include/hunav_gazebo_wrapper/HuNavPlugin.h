@@ -48,6 +48,7 @@
 #include "hunav_msgs/srv/get_agents.hpp"
 #include "hunav_msgs/srv/reset_agents.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "nav_msgs/msg/path.h"
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>

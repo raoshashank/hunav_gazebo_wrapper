@@ -1,0 +1,1 @@
+{"groupids": {"human1": -1, "human2": -1}, "trajectories": {"human1": ["2f", "cf", "32"], "human2": ["cf", "2f", "bf"], "robot": ["49", "2f", "cf", "2f", "ff"]}, "interaction_points": {"human1": "cf", "human2": "cf"}}

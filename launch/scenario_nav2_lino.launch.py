@@ -24,7 +24,7 @@ def _boolean_command(arg):
 
 def generate_launch_description():
     ld = LaunchDescription()
-    with open(os.path.join(get_package_share_directory('hunav_gazebo_wrapper'),'launch','launch_config.yaml'),'rb') as f:
+    with open(os.path.join(get_package_share_directory('hunav_gazebo_wrapper'),'config','launch_params.yaml'),'rb') as f:
         config = yaml.safe_load(f)
     #env vars
     model, plugin, media = GazeboRosPaths.get_paths()
@@ -58,13 +58,7 @@ def generate_launch_description():
     hunav_gazebo_wrapper_pkg_dir = get_package_share_directory('hunav_gazebo_wrapper') 
     robot_params_file =  os.path.join(hunav_gazebo_wrapper_pkg_dir,'config','robot_poses.yaml')   
     
-    robot_name = 'waffle'
-    robot_sdf = os.path.join(get_package_share_directory('turtlebot3_gazebo'),'models','turtlebot3_waffle','model.sdf')
-    robot_urdf = os.path.join(get_package_share_directory('turtlebot3_gazebo'),'urdf','turtlebot3_waffle.urdf')
-    
-    with open(robot_urdf, 'r') as infp:
-        robot_description  = infp.read()
-    
+    robot_name = 'linorobot2'    
     #linorobot
     #robot_description = Command(['xacro ',  PathJoinSubstitution([FindPackageShare("linorobot2_description"), "urdf/robots", "4wd.urdf.xacro"])])
     
@@ -73,19 +67,19 @@ def generate_launch_description():
     
     initial_pose = robot_poses['initial_pose']
     
-    spawn_robot_cmd = Node(
-        package='gazebo_ros',
-        executable='spawn_entity.py',
-        arguments=['-entity', robot_name,
-            '-file',robot_sdf,
-            #'-topic', 'robot_description', 
-            '-x', str(initial_pose['x']),
-            '-y', str(initial_pose['y']),
-            '-z','0.1',
-            '-Y', str(initial_pose['yaw']),
-            ],
-        output='screen',
-    )
+    # spawn_robot_cmd = Node(
+    #     package='gazebo_ros',
+    #     executable='spawn_entity.py',
+    #     arguments=['-entity', robot_name,
+    #         '-file',robot_sdf,
+    #         #'-topic', 'robot_description', 
+    #         '-x', str(initial_pose['x']),
+    #         '-y', str(initial_pose['y']),
+    #         '-z','0.1',
+    #         '-Y', str(initial_pose['yaw']),
+    #         ],
+    #     output='screen',
+    # )
     
     ##################HuNavSim##############
     hunav_loader_node = Node(
@@ -106,7 +100,8 @@ def generate_launch_description():
         {'update_rate': 1000.0},
         {'robot_name': robot_name},
         {'global_frame_to_publish': 'map'},
-        {'use_navgoal_to_start': False},
+        {'use_navgoal_to_start': True},
+        {'navgoal_topic':'plan'},
         {'ignore_models': 'ground_plane'}]
         #arguments=['--ros-args', '--params-file', conf_file]
     )
@@ -199,68 +194,45 @@ def generate_launch_description():
             description='Use simulation (Gazebo) clock if true'))
     
     
-    robot_state_publisher_cmd = Node(
-        package='robot_state_publisher',
-        executable='robot_state_publisher',
-        name='robot_state_publisher',
-        output='screen',
-        parameters=[{'use_sim_time': LaunchConfiguration('use_sim_time', default='true'),
-                     'robot_description': robot_description}],
-        remappings=remappings)
-    ld.add_action(robot_state_publisher_cmd)
+    # robot_state_publisher_cmd = Node(
+    #     package='robot_state_publisher',
+    #     executable='robot_state_publisher',
+    #     name='robot_state_publisher',
+    #     output='screen',
+    #     parameters=[{'use_sim_time': LaunchConfiguration('use_sim_time', default='true'),
+    #                  'robot_description': robot_description}],
+    #     remappings=remappings)
+    # ld.add_action(robot_state_publisher_cmd)
     
-    robot_spawn_process = RegisterEventHandler(
-        OnProcessStart(
-            target_action=gzclient_process,
-            on_start=[
-                LogInfo(msg='Gazebo launched, bringing robot after 2 seconds...'),
-                TimerAction(
-                    period=3.0,
-                    actions=[spawn_robot_cmd],
-                )
-            ]
-        )
-    )
-    ld.add_action(robot_spawn_process)
+    # robot_spawn_process = RegisterEventHandler(
+    #     OnProcessStart(
+    #         target_action=gzclient_process,
+    #         on_start=[
+    #             LogInfo(msg='Gazebo launched, bringing robot after 2 seconds...'),
+    #             TimerAction(
+    #                 period=3.0,
+    #                 actions=[spawn_robot_cmd],
+    #             )
+    #         ]
+    #     )
+    # )
+    # ld.add_action(robot_spawn_process)
+    ld.add_action(IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(os.path.join(get_package_share_directory('linorobot2_gazebo'),
+                                                       'launch','gazebo.launch.py')),
+            launch_arguments={'spawn_x':str(initial_pose['x']),
+                              'spawn_y':str(initial_pose['y'])}.items()
+    ))
     
     #Launch Scenario Manager
     scenario_manager_node = Node(
         package='hunav_gazebo_wrapper',
         executable='scenario_manager.py',
-        output='screen'
+        output='screen',
+        ros_arguments=[
+            "--log-level",
+            PythonExpression(['"node_test:=" + "', "info", '"']),
+        ]
     )
     ld.add_action(scenario_manager_node)
-    
-    #############nav2###############
-    # rviz_cmd = IncludeLaunchDescription(
-    #     PythonLaunchDescriptionSource(
-    #         os.path.join(nav2_launch_dir, 'rviz_launch.py')),
-    #     launch_arguments={'namespace': '',
-    #                       'use_namespace': 'false',    
-    #                       'rviz_config': rviz_config_file}.items())
-    # ld.add_action(rviz_cmd)
-    
-    # bringup_cmd = IncludeLaunchDescription(
-    #     PythonLaunchDescriptionSource(
-    #         os.path.join(nav2_launch_dir, 'bringup_launch.py')),
-    #     launch_arguments={'namespace': '',
-    #                       'use_namespace': 'false',
-    #                       'slam':'False',
-    #                       'map':os.path.join(hunav_gazebo_wrapper_pkg_dir,'worlds',config['world_name'],'map','map.yaml'),
-    #                       'use_sim_time':'true',
-    #                       'params_file': config['nav2_params_file'],
-    #                       'autostart':'true',
-    #                       'use_composition':'True',
-    #                       'use_respawn':'False'}.items())
-    # ld.add_action(bringup_cmd)
-    
-    # waypoint_follower_node = Node(
-    #     package='hunav_gazebo_wrapper',
-    #     executable='waypointfollow.py',
-    #     arguments=[
-    #         '-waypoint_file', robot_params_file
-    #     ],
-    #     output='screen'
-    # )
-    # ld.add_action(waypoint_follower_node)
     return ld

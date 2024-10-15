@@ -22,7 +22,7 @@ find_package(gazebo REQUIRED)
 find_package(hunav_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
-
+find_package(nav_msgs REQUIRED)
 
 include_directories(include)
 include_directories(SYSTEM
@@ -46,6 +46,7 @@ ament_target_dependencies(HuNavPlugin
   gazebo_ros 
   hunav_msgs 
   geometry_msgs
+  nav_msgs
   tf2 
   tf2_geometry_msgs
 ) 
@@ -64,9 +65,7 @@ install(TARGETS hunav_gazebo_world_generator
 ament_python_install_package(${PROJECT_NAME})
 install(PROGRAMS
 	scripts/waypointfollow.py
-  scripts/goToPose.py
   scripts/scenario_manager.py
-  scripts/teleop_twist_keyboard.py
   scripts/gesture_listener.py
 	DESTINATION lib/${PROJECT_NAME}
 	)
